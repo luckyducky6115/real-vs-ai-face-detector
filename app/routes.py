@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template
-from .model import FaceDetector
+from .cnn import FaceDetector
 
 bp = Blueprint("main", __name__)
 detector = FaceDetector("../models/face_detector.pth")
