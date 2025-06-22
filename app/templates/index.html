@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Deepfake Detector</title>
+  <link rel="stylesheet" href="{{ request.url_for('static', path='styles.css') }}" />
+</head>
+<body>
+  <div class="container">
+    <h1>Deepfake Detector</h1>
+
+    <div id="upload-area" class="upload-area">
+      <p class="upload-text">Drag &amp; drop an image here, or</p>
+      <label for="file-input" class="btn-secondary">Browse</label>
+      <input
+        id="file-input"
+        type="file"
+        name="file"
+        accept="image/png, image/jpeg"
+        hidden
+      />
+    </div>
+
+    <div id="result" class="result-card" hidden>
+      <img id="result-img" alt="Uploaded preview" class="preview" />
+      <h2 id="result-label"></h2>
+      <div class="bar-container">
+        <div id="confidence-bar" class="bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <script defer>
+  document.addEventListener("DOMContentLoaded", () => {
+    const area    = document.getElementById('upload-area');
+    const input   = document.getElementById('file-input');
+    const result  = document.getElementById('result');
+    const labelEl = document.getElementById('result-label');
+    const imgEl   = document.getElementById('result-img');
+    const bar     = document.getElementById('confidence-bar');
+
+    ['dragenter','dragover'].forEach(evt =>
+      area.addEventListener(evt, e => {
+        e.preventDefault();
+        area.classList.add('dragover');
+      })
+    );
+    ['dragleave','drop'].forEach(evt =>
+      area.addEventListener(evt, e => {
+        e.preventDefault();
+        area.classList.remove('dragover');
+      })
+    );
+
+    area.addEventListener('drop', async e => {
+      const file = e.dataTransfer.files[0];
+      if (file) await uploadAndPredict(file);
+    });
+
+    input.addEventListener('change', () => {
+      if (input.files.length) uploadAndPredict(input.files[0]);
+    });
+
+    async function uploadAndPredict(file) {
+      result.hidden = true;
+
+      const form = new FormData();
+      form.append('file', file);
+
+      try {
+        const res  = await fetch('/api/predict', { method: 'POST', body: form });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.detail || json.error || 'Upload failed');
+
+        const pct = Math.round(json.score * 100);
+        labelEl.textContent = `${json.label} (${pct}%)`;
+        imgEl.src = URL.createObjectURL(file);
+        bar.style.width = pct + '%';
+        result.hidden = false;
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+  });
+  </script>
+</body>
+</html>

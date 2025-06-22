@@ -1,0 +1,108 @@
+/* base reset */
+* { box-sizing: border-box; margin:0; padding:0 }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+  background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* card container */
+.container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  padding: 2rem;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+/* heading */
+h1 {
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+/* upload area */
+.upload-area {
+  border: 2px dashed #bbb;
+  border-radius: 8px;
+  padding: 2rem 1rem;
+  transition: border-color .2s, background .2s;
+  position: relative;
+  cursor: pointer;
+}
+.upload-area p {
+  color: #666;
+  margin-bottom: 1rem;
+}
+.upload-area.dragover {
+  border-color: #0053ba;
+  background: rgba(0,83,186,0.05);
+}
+.btn-secondary {
+  background: #0053ba;
+  color: white;
+  border: none;
+  padding: .6rem 1.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background .2s;
+}
+.btn-secondary:hover {
+  background: #003f8a;
+}
+
+/* spinner overlay */
+.spinner-overlay {
+  position: absolute;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(255,255,255,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #ddd;
+  border-top: 5px solid #0053ba;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* result card */
+.result-card {
+  margin-top: 1.5rem;
+}
+.preview {
+  max-width: 100%;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
+}
+.result-card h2 {
+  font-size: 1.2rem;
+  color: #222;
+  margin-bottom: .5rem;
+}
+
+/* confidence bar */
+.bar-container {
+  background: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 12px;
+}
+.bar {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #00c6ff, #0053ba);
+  transition: width 1s ease-out;
+  border-radius: 4px;
+}

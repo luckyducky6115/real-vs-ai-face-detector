@@ -1,4 +1,5 @@
 import torch, torch.optim as optim
+#from torch_lr_finder import LRFinder
 from torch.utils.data import DataLoader
 import torch.nn as nn
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
@@ -57,8 +58,8 @@ def main():
     full_train_df = create_dataframe(train_dir)
     full_val_df   = create_dataframe(val_dir)
 
-    train_df = sample_dataframe(full_train_df, n_per_class=1000, seed=42)
-    val_df   = sample_dataframe(full_val_df,   n_per_class=400, seed=42)
+    train_df = sample_dataframe(full_train_df, n_per_class=10000, seed=42)
+    val_df   = sample_dataframe(full_val_df,   n_per_class=4000, seed=42)
 
     # loaders
     train_loader = DataLoader(FaceDataset(train_df, train=True), batch_size=32, shuffle=True)
@@ -73,32 +74,48 @@ def main():
         p.requires_grad = False
     for p in model.block5.parameters():
         p.requires_grad = False
-    total_epochs = 10
-    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.05)
+
     optimizer = optim.Adam([
-        {"params": model.block3.parameters(),   "lr": 1e-5},
-        {"params": model.block4.parameters(),   "lr": 1e-5},
-        {"params": model.block5.parameters(),   "lr": 1e-5},
-        {"params": model.classifier.parameters(), "lr": 1e-3},
-    ], weight_decay=1e-4)
+    {"params": model.classifier.parameters(),"lr": 1e-3},
+    ], weight_decay=5e-5)
+    
     scheduler = optim.lr_scheduler.OneCycleLR(
         optimizer,
-        max_lr=[1e-5, 1e-5, 1e-5, 1e-3],
+        max_lr=3e-3,
         steps_per_epoch=len(train_loader),
-        epochs=total_epochs
+        epochs=3
     )
-    best_acc, wait, patience = 0.0, 0, 3
-    for epoch in range(total_epochs):
-        print(f"Epoch {epoch+1}")
-        if epoch == 3:
-            for p in model.block3.parameters():
-                p.requires_grad = True
-            for p in model.block4.parameters():
-                p.requires_grad = True
-            for p in model.block5.parameters():
-                p.requires_grad = True
+    for epoch in range(3):
+        print(f"Epoch {epoch+1} (Head)")
         tr_loss = train_one_epoch(model, train_loader, optimizer, criterion, device, scheduler)
         val_loss, val_acc = validate_one_epoch(model, val_loader, criterion, device)
+
+    for p in model.block3.parameters():
+        p.requires_grad = True
+    for p in model.block4.parameters():
+        p.requires_grad = True
+    for p in model.block5.parameters():
+        p.requires_grad = True
+    best_acc, wait, patience = 0.0, 0, 4
+    # keep your optimizer as-is:
+    optimizer = optim.Adam([
+    {"params": model.block3.parameters(),    "lr": 1e-5},
+    {"params": model.block4.parameters(),    "lr": 1e-5},
+    {"params": model.block5.parameters(),    "lr": 1e-5},
+    {"params": model.classifier.parameters(), "lr": 1e-3},
+    ], weight_decay=5e-5)
+
+    scheduler = optim.lr_scheduler.OneCycleLR(
+        optimizer,
+        max_lr=[5e-5, 1e-4, 5e-4, 3e-3],    # peaks for block3,4,5 and head
+        steps_per_epoch=len(train_loader),
+        epochs=17
+    )
+    for epoch in range(3, 20):
+        tr_loss = train_one_epoch(model, train_loader, optimizer, criterion, device, scheduler)
+        val_loss, val_acc = validate_one_epoch(model, val_loader, criterion, device)
+        print(f"Epoch {epoch+1}") 
         if val_acc > best_acc:
             best_acc, wait = val_acc, 0
             torch.save(model.state_dict(), "models/face_detector.pth")
@@ -107,21 +124,9 @@ def main():
             if wait >= patience:
                 print(f"Early stopping at epoch {epoch+1}")
                 break
-
-    #for epoch in range(3, 10):
-    #    tr_loss = train_one_epoch(model, train_loader, optimizer, criterion, device)
-    #    val_loss, val_acc = validate_one_epoch(model, val_loader, criterion, device)
-    #    scheduler.step()
-    #    print(f"Epoch {epoch+1}") 
-              #— train loss {tr_loss:.4f}, val loss {val_loss:.4f}, val acc {val_acc:.1f}%")
-    #    if val_acc > best_acc:
-    #        best_acc, wait = val_acc, 0
-    #        torch.save(model.state_dict(), "models/face_detector.pth")
-    #    else:
-    #        wait += 1
-    #        if wait >= patience:
-    #            print(f"Early stopping at epoch {epoch+1}")
-    #            break
+        if val_acc >= 95:
+            print(f"Reached 95% val accuracy at epoch {epoch+1}—stopping.")
+            break
     #detector = FaceDetector(weights_path="models/face_detector.pth")
     #img = Image.open("datasetsmall/validate/0/00005.jpg").convert("RGB")
     #print("Real-face prob:", detector.predict(img))
