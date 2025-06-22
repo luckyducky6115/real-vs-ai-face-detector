@@ -11,7 +11,6 @@ class AttentionVGG(nn.Module):
         feats = vgg.features
 
         # 2) slice into conv3, conv4, conv5 blocks
-        #    (you can adjust these indices based on the exact VGG16 feature layout)
         self.block3 = nn.Sequential(*feats[:17])   # up to pool3
         self.block4 = nn.Sequential(*feats[17:24]) # up to pool4
         self.block5 = nn.Sequential(*feats[24:])   # up to pool5

@@ -17,7 +17,7 @@ class AttentionModule(nn.Module):
 
     def forward(self, feats: tuple[torch.Tensor, ...]):
         # feats is a tuple of feature‐map tensors, e.g. (x3, x4, x5)
-        x = torch.cat(feats, dim=1)           # concat along channel axis
+        x = torch.cat(feats, dim=1)# concat along channel axis
         B, C, _, _ = x.shape
         # Squeeze
         y = self.avgpool(x).view(B, C)

@@ -97,7 +97,16 @@ def main():
         p.requires_grad = True
     for p in model.block5.parameters():
         p.requires_grad = True
+    checkpoint_path = "models/face_detector.pth"
     best_acc, wait, patience = 0.0, 0, 4
+    if os.path.exists(checkpoint_path):
+        print(f"Loading existing checkpoint from {checkpoint_path}")
+        state = torch.load(checkpoint_path, map_location=device)
+        model.load_state_dict(state)
+        model.eval()
+        # run one full pass on your validation set to get its acc
+        _, best_acc = validate_one_epoch(model, val_loader, criterion, device)
+        print(f"Starting from best_acc = {best_acc:.1f}%")
     # keep your optimizer as-is:
     optimizer = optim.Adam([
     {"params": model.block3.parameters(),    "lr": 1e-5},
@@ -117,16 +126,18 @@ def main():
         val_loss, val_acc = validate_one_epoch(model, val_loader, criterion, device)
         print(f"Epoch {epoch+1}") 
         if val_acc > best_acc:
-            best_acc, wait = val_acc, 0
-            torch.save(model.state_dict(), "models/face_detector.pth")
+            best_acc = val_acc
+            torch.save(model.state_dict(), checkpoint_path)
+            print(f"New best! Saving model at {best_acc:.1f}%")
         else:
+            print(f"No improvement (best still {best_acc:.1f}%)")
             wait += 1
             if wait >= patience:
                 print(f"Early stopping at epoch {epoch+1}")
                 break
-        if val_acc >= 95:
-            print(f"Reached 95% val accuracy at epoch {epoch+1}—stopping.")
-            break
+#        if val_acc >= 95:
+#           print(f"Reached 95% val accuracy at epoch {epoch+1}—stopping.")
+#            break
     #detector = FaceDetector(weights_path="models/face_detector.pth")
     #img = Image.open("datasetsmall/validate/0/00005.jpg").convert("RGB")
     #print("Real-face prob:", detector.predict(img))

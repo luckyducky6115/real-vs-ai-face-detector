@@ -73,7 +73,13 @@
         if (!res.ok) throw new Error(json.detail || json.error || 'Upload failed');
 
         const pct = Math.round(json.score * 100);
-        labelEl.textContent = `${json.label} (${pct}%)`;
+
+        // flip the label
+        const displayLabel = json.label === 'Real'
+          ? 'AI-generated'
+          : 'Real';
+
+        labelEl.textContent = `${displayLabel} (${pct}%)`;
         imgEl.src = URL.createObjectURL(file);
         bar.style.width = pct + '%';
         result.hidden = false;

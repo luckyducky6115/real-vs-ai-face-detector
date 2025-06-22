@@ -24,6 +24,7 @@ def sample_dataframe(df: pd.DataFrame,
                    .sample(n=n_per_class, random_state=seed))
     return pd.concat(dfs).sample(frac=1, random_state=seed).reset_index(drop=True)
 
+
 class FaceDataset(Dataset):
     def __init__(self, dataframe, train=True):
         self.df = dataframe
