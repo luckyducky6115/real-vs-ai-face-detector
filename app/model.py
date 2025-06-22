@@ -1,6 +1,6 @@
 import torch
 from PIL import Image
-from .cnn import CNNClassifier
+from .cnn import AttentionVGG as CNNClassifier
 from .utils import inference_transform
 
 class FaceDetector:

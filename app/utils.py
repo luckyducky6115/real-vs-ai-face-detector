@@ -15,6 +15,15 @@ def create_dataframe(data_dir):
             data.append((os.path.join(class_dir, img_name), int(label)))
     return pd.DataFrame(data, columns=["image_path","label"])
 
+def sample_dataframe(df: pd.DataFrame,
+                     n_per_class: int,
+                     seed: int = 42) -> pd.DataFrame:
+    dfs = []
+    for lbl in df.label.unique():
+        dfs.append(df[df.label == lbl]
+                   .sample(n=n_per_class, random_state=seed))
+    return pd.concat(dfs).sample(frac=1, random_state=seed).reset_index(drop=True)
+
 class FaceDataset(Dataset):
     def __init__(self, dataframe, train=True):
         self.df = dataframe
